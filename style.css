@@ -4,7 +4,7 @@
          display: flex;
          flex-direction: column;
          font-family: sans-serif;
-         background-color: rgb(255, 255, 255);
+         background-color: rgb(13, 13, 13);
          color: white;
       }
 
@@ -61,5 +61,5 @@
       }
 
       .dark:hover {
-         background-color: #4f5059;
+         background-color: #646670;
       }
