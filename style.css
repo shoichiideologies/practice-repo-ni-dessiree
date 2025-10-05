@@ -1,0 +1,65 @@
+      body {
+         height: 100vh;
+         margin: 0;
+         display: flex;
+         flex-direction: column;
+         font-family: sans-serif;
+         background-color: black;
+         color: white;
+      }
+
+      section {
+         display: flex;
+         flex-wrap: wrap;
+         flex: 1;
+         padding: 10px;
+         font-size: 40px;
+         font-weight: 300;
+      }
+
+      #output {
+         flex-direction: column;
+         justify-content: flex-end;
+         align-items: flex-end;
+         gap: 15px;
+      }
+
+      #result {
+         color: lightblue;
+      }
+
+      .btn {
+         flex-basis: calc(25% - 10px);
+         font-size: 30px;
+         height: 80px;
+         border-radius: 50px;
+         color: white;
+         margin: 2px;
+         border: none;
+         transition: 0.2s;
+         cursor: pointer;
+      }
+
+      .light {
+         background-color: rgb(169, 166, 166);
+      }
+
+      .light:hover {
+      background-color:  rgb(207, 205, 205);
+      }
+
+      .blue {
+         background-color: lightblue;
+      }
+
+      .blue:hover {
+         background-color: rgb(128, 177, 193);
+      }
+
+      .dark {
+         background-color: #2e2f38;
+      }
+
+      .dark:hover {
+         background-color: #4f5059;
+      }
