@@ -38,13 +38,8 @@
                   addValue(value);
                }
                break;
-            case 'modulus':
-               // Allow modulus to be chained between numbers
-               if (expression === '' && result !== '') {
-                  startFromResult('%');
-               } else if (expression !== '' && !isLastCharOperator()) {
-                  addValue('%');
-               }
+            case 'sqrt':
+               sqrt();
                break;
             case 'submit':
                submit();
@@ -92,6 +87,7 @@
             expression += value;
          }
          } else {
+         // Always add the value to the expression - this ensures numbers show up after √(
          expression += value;
          }
       }
@@ -102,12 +98,23 @@
          // Automatically evaluate and show result if expression is not empty
          if (expression !== '') {
             try {
-               const evalResult = eval(expression);
-               resultDiv.textContent = isNaN(evalResult) || !isFinite(evalResult)
-                  ? ' '
-                  : evalResult < 1
-                  ? parseFloat(evalResult.toFixed(10))
-                  : parseFloat(evalResult.toFixed(2));
+               // Handle square root expressions
+               let evalExpression = expression;
+               if (expression.includes('√')) {
+                  evalExpression = processSquareRootExpression(expression);
+               }
+               
+               // Only try to evaluate if we have a complete expression
+               if (evalExpression && evalExpression !== '' && !evalExpression.endsWith('√')) {
+                  const evalResult = eval(evalExpression);
+                  resultDiv.textContent = isNaN(evalResult) || !isFinite(evalResult)
+                     ? ' '
+                     : evalResult < 1
+                     ? parseFloat(evalResult.toFixed(10))
+                     : parseFloat(evalResult.toFixed(2));
+               } else {
+                  resultDiv.textContent = '';
+               }
             } catch {
                resultDiv.textContent = '';
             }
@@ -144,7 +151,12 @@
       }
 
       function evaluateExpression() {
-         const evalResult = eval(expression);
+         let evalExpression = expression;
+         if (expression.includes('√(')) {
+            evalExpression = processSquareRootExpression(expression);
+         }
+         
+         const evalResult = eval(evalExpression);
          // checks if evalResult isNaN or infinite. It if is, return a space character ' '
          return isNaN(evalResult) || !isFinite(evalResult) 
          ? ' ' 
@@ -168,13 +180,82 @@
          }
       }
 
-      // percentage function is not needed for chained modulus, but keep for legacy single number percentage
-      function percentage() {
-         // If expression is empty but the result exists, divide by 100
+      // square root function
+      function sqrt() {
+         // If expression is empty but result exists, start new expression with sqrt of result
          if (expression === '' && result !== '') {
-            result = parseFloat(result) / 100;
+            const number = parseFloat(result);
+            if (number >= 0) {
+               const sqrtResult = Math.sqrt(number);
+               const formattedResult = sqrtResult < 1 ? parseFloat(sqrtResult.toFixed(10)) : parseFloat(sqrtResult.toFixed(2));
+               result = formattedResult;
+               expression = '';
+            }
          }
-         // Otherwise, modulus is handled by eval in updateDisplay
+         // If expression is empty and no result, start with sqrt symbol
+         else if (expression === '' && result === '') {
+            expression = '√';
+         }
+         // If expression ends with an operator, add sqrt symbol
+         else if (expression !== '' && isLastCharOperator()) {
+            expression += '√';
+         }
+         // If we're already in a sqrt function, don't add another
+         else if (expression.includes('√') && !hasCompleteSqrtExpression()) {
+            // Do nothing, we're already in sqrt mode
+            return;
+         }
+         // If expression has numbers but no operators, replace with sqrt
+         else if (expression !== '' && !isLastCharOperator() && !expression.includes('√')) {
+            expression = '√' + expression;
+         }
+      }
+
+      // Helper function to extract the last number and its position from expression
+      function extractLastNumberInfo() {
+         const operators = ['+', '-', '*', '/'];
+         let lastOperatorIndex = -1;
+         
+         // Find the last operator, but skip the first character if it's a negative sign
+         for (let i = expression.length - 1; i >= 1; i--) {
+            if (operators.includes(expression[i])) {
+               lastOperatorIndex = i;
+               break;
+            }
+         }
+         
+         // If the first character is a negative sign and no other operators found
+         if (lastOperatorIndex === -1 && expression.startsWith('-')) {
+            const numberStr = expression.slice(1);
+            const number = parseFloat(numberStr);
+            return isNaN(number) ? { numberStr: null, startIndex: 0 } : { numberStr: '-' + numberStr, startIndex: 0 };
+         }
+         
+         const startIndex = lastOperatorIndex + 1;
+         const numberStr = expression.slice(startIndex);
+         
+         // Validate that it's a proper number
+         const number = parseFloat(numberStr);
+         return isNaN(number) ? { numberStr: null, startIndex: 0 } : { numberStr: numberStr, startIndex: startIndex };
+      }
+
+      // Process square root expressions for evaluation
+      function processSquareRootExpression(expr) {
+         // Replace √ followed by numbers with Math.sqrt(number)
+         let processed = expr.replace(/√([0-9.]+)/g, 'Math.sqrt($1)');
+         
+         // Handle incomplete sqrt (just √ at the end)
+         if (processed.endsWith('√')) {
+            return processed.slice(0, -1); // Remove incomplete sqrt
+         }
+         
+         return processed;
+      }
+
+      // Helper function to check if sqrt expression is complete
+      function hasCompleteSqrtExpression() {
+         const sqrtMatches = expression.match(/√([0-9.]+)/g);
+         return sqrtMatches && sqrtMatches.length > 0;
       }
 
       function decimal(value) {
